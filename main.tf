@@ -129,7 +129,20 @@ resource "aws_iam_policy" "tasks_execution" {
 
 resource "aws_iam_role_policy_attachment" "tasks_execution" {
   role       = aws_iam_role.tasks_execution.name
-  policy_arn = aws_iam_policy.tasks_execution.arn
+# policy_arn = aws_iam_policy.tasks_execution.arn
+  policy_arn = "arn:aws:iam::aws:policy/AmazonECS_FullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "tasks_execution_ecr" {
+  role       = aws_iam_role.tasks_execution.name
+# policy_arn = aws_iam_policy.tasks_execution.arn
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
+resource "aws_iam_role_policy_attachment" "tasks_execution_cloudwatch" {
+  role       = aws_iam_role.tasks_execution.name
+# policy_arn = aws_iam_policy.tasks_execution.arn
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLogsFullAccess"
 }
 
 data "template_file" "tasks_execution_ssm" {
@@ -265,6 +278,17 @@ resource "aws_security_group" "services_dynamic" {
   }
 
   dynamic "ingress" {
+    for_each = lookup(local.services[count.index], "ingress_ports", [])
+#   for_each = local.services[count.index].ingress_ports
+    content {
+      from_port       = ingress.value
+      to_port         = ingress.value
+      protocol        = "tcp"
+      security_groups = [aws_security_group.services[count.index].id]
+    }
+  }
+
+  dynamic "ingress" {
     for_each = [for k, v in var.services : k
       if k != local.services[count.index].name &&
     contains(lookup(local.services[count.index], "allow_connections_from", []), k)]
@@ -340,8 +364,8 @@ resource "aws_lb_listener" "this" {
 # SERVICE DISCOVERY
 
 resource "aws_service_discovery_private_dns_namespace" "this" {
-  count = length([for s in local.services : s if lookup(s, "service_discovery_enabled", false)]) > 0 ? 1 : 0
-
+#  count = length([for s in local.services : s if lookup(s, "service_discovery_enabled", false)]) > 0 ? 1 : 0
+  count = 0
   name        = "${var.name}.${terraform.workspace}.local"
   description = "${var.name} private dns namespace"
   vpc         = local.vpc_id
@@ -350,8 +374,8 @@ resource "aws_service_discovery_private_dns_namespace" "this" {
 resource "aws_service_discovery_service" "this" {
   # ⚠️ replace when https://github.com/hashicorp/terraform/issues/22560 gets fixed
   # for_each = [for s in local.services : s if lookup(s, "service_discovery_enabled", false)]
-  count = length(local.services_with_sd) > 0 ? length(local.services_with_sd) : 0
-
+#  count = length(local.services_with_sd) > 0 ? length(local.services_with_sd) : 0
+  count = 0
   # name = each.value.name
   name = local.services_with_sd[count.index].name
 
