@@ -133,6 +133,12 @@ resource "aws_iam_role_policy_attachment" "tasks_execution" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonECS_FullAccess"
 }
 
+resource "aws_iam_role_policy_attachment" "tasks_execution_s3" {
+  role       = aws_iam_role.tasks_execution.name
+# policy_arn = aws_iam_policy.tasks_execution.arn
+  policy_arn = "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+}
+
 resource "aws_iam_role_policy_attachment" "tasks_execution_ecr" {
   role       = aws_iam_role.tasks_execution.name
 # policy_arn = aws_iam_policy.tasks_execution.arn
