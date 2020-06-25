@@ -484,13 +484,16 @@ resource "aws_appautoscaling_policy" "this" {
   service_namespace  = aws_appautoscaling_target.this[count.index].service_namespace
 
   target_tracking_scaling_policy_configuration {
-    target_value = lookup(local.services[count.index], "auto_scaling_max_cpu_util", 100)
+#   target_value = lookup(local.services[count.index], "auto_scaling_max_cpu_util", 100)
+    target_value = lookup(local.services[count.index], "auto_scaling_target_value", 100)
 
     scale_in_cooldown  = 300
     scale_out_cooldown = 300
 
     predefined_metric_specification {
-      predefined_metric_type = "ECSServiceAverageCPUUtilization"
+      predefined_metric_type = lookup(local.services[count.index], "auto_scaling_metric_type", "ECSServiceAverageCPUUtilization")
+#     predefined_metric_type = "ECSServiceAverageCPUUtilization"
+      resource_label = "${aws_lb.this[count.index].arn_suffix}/${aws_lb_target_group.this[count.index].arn_suffix}"
     }
   }
 
