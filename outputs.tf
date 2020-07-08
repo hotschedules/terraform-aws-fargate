@@ -77,12 +77,12 @@ output "application_load_balancers_listeners_arns" {
 
 output "web_security_group_arn" {
   description = "ARN of Web-facing Security Rule"
-  value       = aws_security_group.web.arn
+  value       = var.alb_create ? aws_security_group.web[0].arn : ""
 }
 
 output "web_security_group_ingress" {
   description = "Ingress Rule of Web-facing Security Rule"
-  value       = aws_security_group.web.ingress
+  value       = var.alb_create ? aws_security_group.web[0].ingress : {}
 }
 
 output "services_security_groups_arns" {

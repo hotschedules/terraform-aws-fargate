@@ -223,6 +223,7 @@ resource "aws_cloudwatch_log_group" "this" {
 # SECURITY GROUPS
 
 resource "aws_security_group" "web" {
+  count  = var.alb_create ? 1 : 0
   vpc_id = local.vpc_id
   name   = "${var.name}-${terraform.workspace}-web-sg"
 
@@ -258,7 +259,7 @@ resource "aws_security_group" "services" {
     from_port       = local.services[count.index].container_port
     to_port         = local.services[count.index].container_port
     protocol        = "tcp"
-    security_groups = [aws_security_group.web.id]
+    security_groups = var.alb_create ? [aws_security_group.web[count.index].id] : [var.alb_security_group_id]
   }
 
   egress {
@@ -344,17 +345,17 @@ resource "aws_lb_target_group" "this" {
 }
 
 resource "aws_lb" "this" {
-  count = local.services_count > 0 ? local.services_count : 0
+  count = local.services_count > 0 && var.alb_create ? local.services_count : 0
 
   name            = "${var.name}-${terraform.workspace}-${local.services[count.index].name}-alb"
   subnets         = slice(local.vpc_public_subnets_ids, 0, min(length(data.aws_availability_zones.this.names), length(local.vpc_public_subnets_ids)))
-  security_groups = [aws_security_group.web.id]
+  security_groups = [aws_security_group.web[count.index].id]
 }
 
 resource "aws_lb_listener" "this" {
   count = local.services_count > 0 ? local.services_count : 0
 
-  load_balancer_arn = aws_lb.this[count.index].arn
+  load_balancer_arn = var.alb_create ? aws_lb.this[count.index].arn : var.alb_arn
   port              = lookup(local.services[count.index], "acm_certificate_arn", "") != "" ? 443 : 80
   protocol          = lookup(local.services[count.index], "acm_certificate_arn", "") != "" ? "HTTPS" : "HTTP"
   ssl_policy        = lookup(local.services[count.index], "acm_certificate_arn", "") != "" ? "ELBSecurityPolicy-FS-2018-06" : null
@@ -493,7 +494,7 @@ resource "aws_appautoscaling_policy" "this" {
     predefined_metric_specification {
       predefined_metric_type = lookup(local.services[count.index], "auto_scaling_metric_type", "ECSServiceAverageCPUUtilization")
 #     predefined_metric_type = "ECSServiceAverageCPUUtilization"
-      resource_label = "${aws_lb.this[count.index].arn_suffix}/${aws_lb_target_group.this[count.index].arn_suffix}"
+      resource_label = var.alb_create ? "${aws_lb.this[count.index].arn_suffix}/${aws_lb_target_group.this[count.index].arn_suffix}" : "${var.alb_arn_suffix}/${aws_lb_target_group.this[count.index].arn_suffix}"
     }
   }
 
@@ -723,7 +724,7 @@ data "template_file" "metric_dashboard" {
 
   vars = {
     region         = var.region != "" ? var.region : data.aws_region.current.name
-    alb_arn_suffix = aws_lb.this[count.index].arn_suffix
+    alb_arn_suffix = var.alb_create ? aws_lb.this[count.index].arn_suffix : var.alb_arn_suffix
     cluster_name   = aws_ecs_cluster.this.name
     service_name   = local.services[count.index].name
   }

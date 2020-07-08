@@ -76,6 +76,26 @@ variable "ssm_allowed_parameters" {
 
 ## ALB variables
 
+variable "alb_create" {
+  description = "Whether or not create ALBs using this module. If you have a preexisting ALB, just mark it as false"
+  default     = true
+}
+
+variable "alb_arn" {
+  description = "The arn of the preexisting ALB"
+  default = ""
+}
+
+variable "alb_arn_suffix" {
+  description = "The arn suffix of the preexisting ALB"
+  default = ""
+}
+
+variable "alb_security_group_id" {
+  description = "The security group id of the preexisting ALB"
+  default = ""
+}
+
 variable "alb_default_health_check_interval" {
   default = 30
 }
