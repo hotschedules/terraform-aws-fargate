@@ -81,6 +81,11 @@ variable "alb_create" {
   default     = true
 }
 
+variable "alb_listener_create" {
+  description = "Whether or not create ALB listeners using this module. If you create the listeners from your module, just mark it as false"
+  default     = true
+}
+
 variable "alb_arn" {
   description = "The arn of the preexisting ALB"
   default = ""

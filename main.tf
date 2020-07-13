@@ -353,7 +353,7 @@ resource "aws_lb" "this" {
 }
 
 resource "aws_lb_listener" "this" {
-  count = local.services_count > 0 ? local.services_count : 0
+  count = local.services_count > 0 && var.alb_listener_create ? local.services_count : 0
 
   load_balancer_arn = var.alb_create ? aws_lb.this[count.index].arn : var.alb_arn
   port              = lookup(local.services[count.index], "acm_certificate_arn", "") != "" ? 443 : 80

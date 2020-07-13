@@ -73,6 +73,13 @@ output "application_load_balancers_listeners_arns" {
   value       = aws_lb_listener.this.*.arn
 }
 
+# TARGET GROUPS
+
+output "target_groups_arns" {
+  description = "List of ARNs of Target Groups"
+  value       = aws_lb_target_group.this.*.arn
+}
+
 # SECURITY GROUPS
 
 output "web_security_group_arn" {
