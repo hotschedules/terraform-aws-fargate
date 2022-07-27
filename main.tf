@@ -24,21 +24,21 @@ locals {
   vpc_public_subnets = (
     length(var.vpc_public_subnets) > 0 || ! var.vpc_create ?
     var.vpc_public_subnets :
-    list(
+    tolist([
       cidrsubnet(var.vpc_cidr, 8, 1),
       cidrsubnet(var.vpc_cidr, 8, 2),
       cidrsubnet(var.vpc_cidr, 8, 3)
-    )
+    ])
   )
 
   vpc_private_subnets = (
     length(var.vpc_private_subnets) > 0 || ! var.vpc_create ?
     var.vpc_private_subnets :
-    list(
+    tolist([
       cidrsubnet(var.vpc_cidr, 8, 101),
       cidrsubnet(var.vpc_cidr, 8, 102),
       cidrsubnet(var.vpc_cidr, 8, 103)
-    )
+    ])
   )
 
   vpc_private_subnets_ids = ! var.vpc_create ? var.vpc_external_private_subnets_ids : module.vpc.private_subnets
@@ -60,7 +60,7 @@ data "aws_caller_identity" "current" {}
 
 module "vpc" {
   source  = "terraform-aws-modules/vpc/aws"
-  version = "2.9.0"
+  #version = "3.14.2"
 
   create_vpc = var.vpc_create
 
@@ -79,7 +79,7 @@ module "vpc" {
   enable_dns_hostnames = true
 
   # Every instance will have a dedicated internal endpoint to communicate with S3
-  enable_s3_endpoint = true
+#  enable_s3_endpoint = true
 }
 
 # ECR
